@@ -1,4 +1,4 @@
-import sys, os, urllib, urllib2, json, time, getpass
+import sys, os, urllib, urllib2, json, time, getpass, re
 
 try:
 	from bs4 import BeautifulSoup
@@ -59,7 +59,12 @@ def get_photos(username, password):
 	print "Logging in & fetching first photos..."
 	res = make_request("/login/?next=/yourphotos/", {"email": username, "password": password, "csrfmiddlewaretoken": csrf})
 	html = res.read()
-	last_id = html.split("\"last_id\":")[1].split("}")[0]
+	
+	try: last_id = html.split("\"last_id\":")[1].split("}")[0]
+	except: 
+		print "Wrong username/password combination. Aborting."
+		sys.exit(0)
+		
 	extract_photos(html)
 	if last_id:
 		get_more_photos(last_id)
@@ -137,7 +142,7 @@ def download_file(url, filename):
 	f.close()
 
 def build_html(username):
-	global phtoos
+	global photos
 	imagelist = []
 	for p in photos:
 		imagelist.append('<li id="i%(id)s"><h2>%(title)s</h2><img src="%(filename)s" /></li>' % p)
@@ -157,7 +162,7 @@ def build_html(username):
 	username = re.sub('[-\s]+', '-', re.sub('[^\w\s-]', '', username.split("@")[0]).strip().lower())
 	filename = "picplz_%s_backup.html" % username
 	f = open(filename, 'w')
-	f.write(h)
+	f.write(h.encode('utf-8'))
 	f.close()
 	print "HTML built:", filename
 
